@@ -131,13 +131,13 @@ function buildDimensionList(
       note = "检查视角切换是否有过渡、是否与设定视角一致";
     }
     if (id === 24) {
-      note = "检查支线剧情是否停滞超过5章未推进";
+      note = "对照 subplot_board 和 chapter_summaries：如果任何支线超过5章未被提及或推进→warning。如果存在支线但近3章完全没有任何支线推进→warning";
     }
     if (id === 25) {
-      note = "检查主要角色情感弧线是否平坦（连续3章无情绪变化）";
+      note = "对照 emotional_arcs 和 chapter_summaries：如果主要角色连续3章情绪状态无变化（没有新的压力、释放、转变）→warning。注意区分'角色处境未变'和'角色内心未变'";
     }
     if (id === 26) {
-      note = "检查章节类型节奏：连续≥3同类型章→warning，≥5章无高潮/回收→warning";
+      note = "对照 chapter_summaries 的章节类型分布：连续≥3章相同类型（如连续3个事件章/战斗章/布局章）→warning。≥5章没有出现回收章或高潮章→warning。请明确列出最近章节的类型序列";
     }
     if (id === 28) {
       note = "检查番外事件是否与正典约束表矛盾";

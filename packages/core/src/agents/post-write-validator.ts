@@ -218,10 +218,12 @@ export function validatePostWrite(
     });
   }
 
-  // 11. Book-level prohibitions (substring match for short prohibitions, min 2 chars)
+  // 11. Book-level prohibitions
+  // Short prohibitions (2-30 chars): exact substring match
+  // Long prohibitions (>30 chars): skip — these are conceptual rules for prompt-level enforcement only
   if (bookRules?.prohibitions) {
     for (const prohibition of bookRules.prohibitions) {
-      if (prohibition.length >= 2 && prohibition.length <= 15 && content.includes(prohibition)) {
+      if (prohibition.length >= 2 && prohibition.length <= 30 && content.includes(prohibition)) {
         violations.push({
           rule: "本书禁忌",
           severity: "error",
