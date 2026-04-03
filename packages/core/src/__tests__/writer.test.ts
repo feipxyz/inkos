@@ -283,7 +283,7 @@ describe("WriterAgent", () => {
         chapterContent: "broken chapter",
         chapterNumber: 7,
         issues,
-        mode: "spot-fix",
+        mode: "local-fix",
         genre: "xuanhuan",
         lengthSpec: buildLengthSpec(2200, "zh"),
       });
@@ -293,7 +293,7 @@ describe("WriterAgent", () => {
         "broken chapter",
         7,
         issues,
-        "spot-fix",
+        "local-fix",
         "xuanhuan",
         expect.objectContaining({
           lengthSpec: expect.objectContaining({ target: 2200 }),

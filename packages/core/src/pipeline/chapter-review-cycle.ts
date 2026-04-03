@@ -38,7 +38,7 @@ export async function runChapterReviewCycle(params: {
   readonly repairChapter: (
     chapterContent: string,
     issues: ReadonlyArray<AuditIssue>,
-    mode: "spot-fix" | "rewrite",
+    mode: "local-fix" | "rewrite",
   ) => Promise<ReviseOutput>;
   readonly auditor: {
     auditChapter: (
@@ -108,8 +108,8 @@ export async function runChapterReviewCycle(params: {
 
   if (params.initialOutput.postWriteErrors.length > 0) {
     params.logWarn({
-      zh: `检测到 ${params.initialOutput.postWriteErrors.length} 个后写错误，审计前触发 spot-fix 修补`,
-      en: `${params.initialOutput.postWriteErrors.length} post-write errors detected, triggering spot-fix before audit`,
+      zh: `检测到 ${params.initialOutput.postWriteErrors.length} 个后写错误，审计前触发局部修复`,
+      en: `${params.initialOutput.postWriteErrors.length} post-write errors detected, triggering local repair before audit`,
     });
     const spotFixIssues = params.initialOutput.postWriteErrors.map((violation) => ({
       severity: "critical" as const,
@@ -120,7 +120,7 @@ export async function runChapterReviewCycle(params: {
     const fixResult = await params.repairChapter(
       finalContent,
       spotFixIssues,
-      "spot-fix",
+      "local-fix",
     );
     totalUsage = params.addUsage(totalUsage, fixResult.tokenUsage);
     if (fixResult.revisedContent.length > 0) {
@@ -140,14 +140,14 @@ export async function runChapterReviewCycle(params: {
   params.logStage({ zh: "审计草稿", en: "auditing draft" });
   let auditResult = await evaluateChapter(finalContent);
 
-  const repairModes = ["spot-fix", "rewrite"] as const;
+  const repairModes = ["local-fix", "rewrite"] as const;
   for (const repairMode of repairModes) {
     if (auditResult.passed || auditResult.issues.length === 0) {
       break;
     }
 
     params.logStage(
-      repairMode === "spot-fix"
+      repairMode === "local-fix"
         ? { zh: "自动修复当前章的局部问题", en: "auto-fixing local issues in the current chapter" }
         : { zh: "当前章局部修复未通过，升级为整章改写", en: "local repair still failed, escalating to full chapter rewrite" },
     );
@@ -181,7 +181,7 @@ export async function runChapterReviewCycle(params: {
     finalContent = normalizedRevision.content;
     finalWordCount = normalizedRevision.wordCount;
     revised = true;
-    params.assertChapterContentNotEmpty(finalContent, repairMode === "spot-fix" ? "revision" : "rewrite");
+    params.assertChapterContentNotEmpty(finalContent, repairMode === "local-fix" ? "revision" : "rewrite");
 
     const nextAudit = await evaluateChapter(finalContent, 0);
     auditResult = params.restoreLostAuditIssues(auditResult, nextAudit);

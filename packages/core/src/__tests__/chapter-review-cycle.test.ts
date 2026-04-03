@@ -29,7 +29,7 @@ function createAuditResult(overrides?: Partial<AuditResult>): AuditResult {
 }
 
 describe("runChapterReviewCycle", () => {
-  it("applies post-write spot-fix before the first audit pass", async () => {
+  it("applies post-write local fix before the first audit pass", async () => {
     const auditChapter = vi.fn()
       .mockResolvedValue(createAuditResult());
     const reviseChapter = vi.fn().mockResolvedValue({
@@ -274,7 +274,7 @@ describe("runChapterReviewCycle", () => {
       "original draft",
       1,
       failingAudit.issues,
-      "spot-fix",
+      "local-fix",
       "xuanhuan",
       expect.any(Object),
     );

@@ -1859,7 +1859,7 @@ describe("PipelineRunner", () => {
     }
   });
 
-  it("uses the latest revised content as the input for follow-up spot-fix revisions", async () => {
+  it("uses the latest revised content as the input for follow-up local-fix revisions", async () => {
     const { root, runner, bookId } = await createRunnerFixture();
 
     vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
@@ -3853,7 +3853,7 @@ describe("PipelineRunner", () => {
     }
   });
 
-  it("defaults manual reviseDraft to spot-fix when mode is omitted", async () => {
+  it("defaults manual reviseDraft to local-fix when mode is omitted", async () => {
     const { root, runner, state, bookId } = await createRunnerFixture();
     const storyDir = join(state.bookDir(bookId), "story");
     const chaptersDir = join(state.bookDir(bookId), "chapters");
@@ -3906,7 +3906,7 @@ describe("PipelineRunner", () => {
       await runner.reviseDraft(bookId, 1);
 
       expect(reviseChapter).toHaveBeenCalledTimes(1);
-      expect(reviseChapter.mock.calls[0]?.[4]).toBe("spot-fix");
+      expect(reviseChapter.mock.calls[0]?.[4]).toBe("local-fix");
     } finally {
       await rm(root, { recursive: true, force: true });
     }

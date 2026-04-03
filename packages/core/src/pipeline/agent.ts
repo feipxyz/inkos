@@ -55,13 +55,13 @@ const TOOLS: ReadonlyArray<ToolDefinition> = [
   },
   {
     name: "revise_chapter",
-    description: "修订指定章节的文字质量。根据审计问题做局部修正，不改变剧情走向。默认 spot-fix（定点修复最小改动）；也支持 polish(润色)、rewrite(改写)、rework(重写)、anti-detect。注意：不能用来补缺失章节、不能改章节号、不能替代 write_draft。",
+    description: "修订指定章节的文字质量。根据审计问题做局部修正，不改变剧情走向。默认 local-fix（局部修复最小改动）；也支持 polish(润色)、rewrite(改写)、rework(重写)、anti-detect。注意：不能用来补缺失章节、不能改章节号、不能替代 write_draft。",
     parameters: {
       type: "object",
       properties: {
         bookId: { type: "string", description: "书籍ID" },
         chapterNumber: { type: "number", description: "章节号（不填则修订最新章）" },
-        mode: { type: "string", enum: ["polish", "rewrite", "rework", "spot-fix", "anti-detect"], description: `修订模式（默认${DEFAULT_REVISE_MODE}）` },
+        mode: { type: "string", enum: ["polish", "rewrite", "rework", "local-fix", "anti-detect"], description: `修订模式（默认${DEFAULT_REVISE_MODE}）` },
       },
       required: ["bookId"],
     },

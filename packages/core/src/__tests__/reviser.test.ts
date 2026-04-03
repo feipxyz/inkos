@@ -201,7 +201,7 @@ describe("ReviserAgent", () => {
         "原始正文。",
         1,
         [CRITICAL_ISSUE],
-        "spot-fix",
+        "local-fix",
         "xuanhuan",
         {
           lengthSpec: buildLengthSpec(220, "zh"),
@@ -224,7 +224,7 @@ describe("ReviserAgent", () => {
     }
   });
 
-  it("reconstructs revised content from spot-fix patches and preserves untouched text", async () => {
+  it("reconstructs revised content from local-fix patches and preserves untouched text", async () => {
     const root = await mkdtemp(join(tmpdir(), "inkos-reviser-spotfix-patch-test-"));
     const bookDir = join(root, "book");
     await mkdir(join(bookDir, "story"), { recursive: true });
@@ -282,7 +282,7 @@ describe("ReviserAgent", () => {
         original,
         1,
         [CRITICAL_ISSUE],
-        "spot-fix",
+        "local-fix",
         "xuanhuan",
       );
 
@@ -405,7 +405,7 @@ describe("ReviserAgent", () => {
         "原始正文。",
         100,
         [CRITICAL_ISSUE],
-        "spot-fix",
+        "local-fix",
         "xuanhuan",
         {
           chapterIntent: "# Chapter Intent\n\n## Goal\nBring the focus back to the mentor oath conflict.\n",
