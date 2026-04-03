@@ -502,6 +502,9 @@ export async function executeAgentTool(
       for (let i = 0; i < count; i++) {
         const result = await pipeline.writeNextChapter(bookId);
         results.push(result);
+        if (result.status !== "ready-for-review") {
+          break;
+        }
       }
       return JSON.stringify(results);
     }

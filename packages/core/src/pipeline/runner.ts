@@ -580,6 +580,7 @@ export class PipelineRunner {
       await this.state.ensureControlDocuments(bookId);
       const book = await this.state.loadBookConfig(bookId);
       const bookDir = this.state.bookDir(bookId);
+      await this.assertNoPendingChapterReview(bookId);
       const chapterNumber = await this.state.getNextChapterNumber(bookId);
       const stageLanguage = await this.resolveBookLanguage(book);
       this.logStage(stageLanguage, { zh: "准备章节输入", en: "preparing chapter inputs" });
@@ -1151,7 +1152,7 @@ export class PipelineRunner {
     await this.state.ensureControlDocuments(bookId);
     const book = await this.state.loadBookConfig(bookId);
     const bookDir = this.state.bookDir(bookId);
-    await this.assertNoPendingStateRepair(bookId);
+    await this.assertNoPendingChapterReview(bookId);
     const chapterNumber = await this.state.getNextChapterNumber(bookId);
     const stageLanguage = await this.resolveBookLanguage(book);
     this.logStage(stageLanguage, { zh: "准备章节输入", en: "preparing chapter inputs" });
@@ -2015,16 +2016,24 @@ ${matrix}`,
     };
   }
 
-  private async assertNoPendingStateRepair(bookId: string): Promise<void> {
+  private async assertNoPendingChapterReview(bookId: string): Promise<void> {
     const existingIndex = await this.state.loadChapterIndex(bookId);
     const latestChapter = [...existingIndex].sort((left, right) => right.number - left.number)[0];
-    if (latestChapter?.status !== "state-degraded") {
+    if (!latestChapter) {
       return;
     }
 
-    throw new Error(
-      `Latest chapter ${latestChapter.number} is state-degraded. Repair state or rewrite that chapter before continuing.`,
-    );
+    if (latestChapter.status === "state-degraded") {
+      throw new Error(
+        `Latest chapter ${latestChapter.number} is state-degraded. Repair state or rewrite that chapter before continuing.`,
+      );
+    }
+
+    if (latestChapter.status === "audit-failed") {
+      throw new Error(
+        `Latest chapter ${latestChapter.number} is audit-failed. Repair or rewrite that chapter before continuing.`,
+      );
+    }
   }
 
   // ---------------------------------------------------------------------------

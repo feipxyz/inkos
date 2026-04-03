@@ -171,4 +171,119 @@ describe("runChapterReviewCycle", () => {
     expect(result.finalContent).toBe("original draft");
     expect(result.revised).toBe(false);
   });
+
+  it("escalates from local fix to full rewrite when the repaired chapter still fails audit", async () => {
+    const failingAudit = createAuditResult({
+      passed: false,
+      issues: [{
+        severity: "critical",
+        category: "continuity",
+        description: "chapter still breaks continuity",
+        suggestion: "rewrite the scene flow",
+      }],
+      summary: "bad",
+    });
+    const passingAudit = createAuditResult({
+      passed: true,
+      issues: [],
+      summary: "clean",
+    });
+    const auditChapter = vi.fn()
+      .mockResolvedValueOnce(failingAudit)
+      .mockResolvedValueOnce(failingAudit)
+      .mockResolvedValueOnce(passingAudit);
+    const reviseChapter = vi.fn()
+      .mockResolvedValueOnce({
+        revisedContent: "locally fixed draft",
+        wordCount: 16,
+        fixedIssues: ["fixed local detail"],
+        updatedState: "",
+        updatedLedger: "",
+        updatedHooks: "",
+        tokenUsage: ZERO_USAGE,
+      })
+      .mockResolvedValueOnce({
+        revisedContent: "fully rewritten draft",
+        wordCount: 18,
+        fixedIssues: ["rewrote chapter"],
+        updatedState: "",
+        updatedLedger: "",
+        updatedHooks: "",
+        tokenUsage: ZERO_USAGE,
+      });
+    const normalizeDraftLengthIfNeeded = vi.fn()
+      .mockResolvedValueOnce({
+        content: "original draft",
+        wordCount: 13,
+        applied: false,
+        tokenUsage: ZERO_USAGE,
+      })
+      .mockResolvedValueOnce({
+        content: "locally fixed draft",
+        wordCount: 16,
+        applied: false,
+        tokenUsage: ZERO_USAGE,
+      })
+      .mockResolvedValueOnce({
+        content: "fully rewritten draft",
+        wordCount: 18,
+        applied: false,
+        tokenUsage: ZERO_USAGE,
+      });
+
+    const result = await runChapterReviewCycle({
+      book: { genre: "xuanhuan" },
+      bookDir: "/tmp/book",
+      chapterNumber: 1,
+      initialOutput: {
+        content: "original draft",
+        wordCount: 13,
+        postWriteErrors: [],
+      },
+      lengthSpec: LENGTH_SPEC,
+      reducedControlInput: undefined,
+      initialUsage: ZERO_USAGE,
+      createReviser: () => ({ reviseChapter }),
+      auditor: { auditChapter },
+      normalizeDraftLengthIfNeeded,
+      assertChapterContentNotEmpty: () => undefined,
+      addUsage: (left, right) => ({
+        promptTokens: left.promptTokens + (right?.promptTokens ?? 0),
+        completionTokens: left.completionTokens + (right?.completionTokens ?? 0),
+        totalTokens: left.totalTokens + (right?.totalTokens ?? 0),
+      }),
+      restoreLostAuditIssues: (_previous, next) => next,
+      analyzeAITells: () => ({ issues: [] as AuditIssue[] }),
+      analyzeSensitiveWords: () => ({ found: [] as Array<{ severity: "warn" | "block" }>, issues: [] as AuditIssue[] }),
+      logWarn: () => undefined,
+      logStage: () => undefined,
+    });
+
+    expect(reviseChapter).toHaveBeenNthCalledWith(
+      1,
+      "/tmp/book",
+      "original draft",
+      1,
+      failingAudit.issues,
+      "spot-fix",
+      "xuanhuan",
+      expect.any(Object),
+    );
+    expect(reviseChapter).toHaveBeenNthCalledWith(
+      2,
+      "/tmp/book",
+      "locally fixed draft",
+      1,
+      failingAudit.issues,
+      "rewrite",
+      "xuanhuan",
+      expect.any(Object),
+    );
+    expect(auditChapter).toHaveBeenNthCalledWith(1, "/tmp/book", "original draft", 1, "xuanhuan", undefined);
+    expect(auditChapter).toHaveBeenNthCalledWith(2, "/tmp/book", "locally fixed draft", 1, "xuanhuan", { temperature: 0 });
+    expect(auditChapter).toHaveBeenNthCalledWith(3, "/tmp/book", "fully rewritten draft", 1, "xuanhuan", { temperature: 0 });
+    expect(result.finalContent).toBe("fully rewritten draft");
+    expect(result.revised).toBe(true);
+    expect(result.auditResult.passed).toBe(true);
+  });
 });

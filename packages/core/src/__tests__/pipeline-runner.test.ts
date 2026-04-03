@@ -2423,6 +2423,34 @@ describe("PipelineRunner", () => {
     await rm(root, { recursive: true, force: true });
   });
 
+  it("blocks writing a new chapter when the latest persisted chapter is audit-failed", async () => {
+    const { root, runner, state, bookId } = await createRunnerFixture({
+      inputGovernanceMode: "legacy",
+    });
+    const now = "2026-03-19T00:00:00.000Z";
+    const storyDir = join(state.bookDir(bookId), "story");
+
+    await Promise.all([
+      writeFile(join(storyDir, "current_state.md"), "stable state", "utf-8"),
+      writeFile(join(storyDir, "pending_hooks.md"), "stable hooks", "utf-8"),
+      state.saveChapterIndex(bookId, [{
+        number: 1,
+        title: "Failed Review",
+        status: "audit-failed" as ChapterMeta["status"],
+        wordCount: 1234,
+        createdAt: now,
+        updatedAt: now,
+        auditIssues: ["[critical] continuity failed"],
+        lengthWarnings: [],
+      }]),
+      writeFile(join(state.bookDir(bookId), "chapters", "0001_Failed_Review.md"), "# 第1章 Failed Review\n\nbody", "utf-8"),
+    ]);
+
+    await expect(runner.writeNextChapter(bookId)).rejects.toThrow(/audit-failed/i);
+
+    await rm(root, { recursive: true, force: true });
+  });
+
   it("repairs the latest state-degraded chapter from persisted body without rewriting it", async () => {
     const { root, runner, state, bookId } = await createRunnerFixture({
       inputGovernanceMode: "legacy",
